@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de migraciones</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header>
+    <div class="links">
+        <a th:href="@{/}">Migrar</a>
+        <a th:href="@{/servers}">Servidores</a>
+        <a th:href="@{/reports}">Reportes</a>
+    </div>
+    <div class="user" th:replace="~{fragments/userbar :: bar}"></div>
+</header>
+<main>
+    <h1>Reporte de migraciones</h1>
+    <p class="hint">Correlación entre cada item de origen y el item equivalente creado o actualizado en el destino.</p>
+
+    <div class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>Origen</th>
+                <th>Item origen</th>
+                <th>Destino</th>
+                <th>Item destino</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td th:text="${r.sourceConfigName()} + ' (' + ${r.sourceType()} + ')'"></td>
+                <td>
+                    <a th:if="${r.sourceUrl()}" th:href="${r.sourceUrl()}" target="_blank" rel="noopener"
+                       th:text="${r.sourceItemId()}"></a>
+                    <span th:unless="${r.sourceUrl()}" th:text="${r.sourceItemId()}"></span>
+                </td>
+                <td th:text="${r.targetConfigName()} + ' (' + ${r.targetType()} + ')'"></td>
+                <td>
+                    <a th:if="${r.targetUrl()}" th:href="${r.targetUrl()}" target="_blank" rel="noopener"
+                       th:text="${r.targetItemId()}"></a>
+                    <span th:unless="${r.targetUrl()}" th:text="${r.targetItemId()}"></span>
+                </td>
+                <td>
+                    <button type="button" th:if="${r.bothLinksAvailable()}"
+                            th:attr="data-source=${r.sourceUrl()},data-target=${r.targetUrl()}"
+                            onclick="openBoth(this)">
+                        Ver ambos
+                    </button>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(rows)}"><td colspan="5">Todavía no se ha migrado ningún item.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    function openBoth(btn) {
+        window.open(btn.dataset.source, '_blank', 'noopener');
+        window.open(btn.dataset.target, '_blank', 'noopener');
+    }
+</script>
+</body>
+</html>

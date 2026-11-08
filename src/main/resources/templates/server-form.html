@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Servidor</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header>
+    <div class="links">
+        <a th:href="@{/}">Migrar</a>
+        <a th:href="@{/servers}">Servidores</a>
+        <a th:href="@{/reports}">Reportes</a>
+    </div>
+    <div class="user" th:replace="~{fragments/userbar :: bar}"></div>
+</header>
+<main>
+    <h1 th:text="${server.id} == null ? 'Nuevo servidor' : 'Editar servidor'"></h1>
+
+    <form class="card" th:action="@{/servers}" method="post" th:object="${server}">
+        <input type="hidden" th:field="*{id}">
+
+        <label for="name">Nombre</label>
+        <input id="name" type="text" th:field="*{name}" required>
+
+        <label for="type">Tipo de servidor</label>
+        <select id="type" th:field="*{type}" required>
+            <option value="">-- seleccione --</option>
+            <option th:each="t : ${types}" th:value="${t.type()}" th:text="${t.displayName()}"
+                    th:attr="data-username=${t.usernameLabel()},data-username-required=${t.usernameRequired()},data-url=${t.defaultUrl()}"></option>
+        </select>
+
+        <label for="url">URL del servidor</label>
+        <input id="url" type="text" th:field="*{url}" required>
+
+        <label for="username" id="usernameLabel">Usuario</label>
+        <input id="username" type="text" th:field="*{username}">
+
+        <label for="apiToken">API Token</label>
+        <input id="apiToken" type="password" th:field="*{apiToken}" autocomplete="off"
+               th:required="${server.id} == null">
+        <span class="hint" th:if="${server.id != null}">Déjelo vacío para conservar el token actual.</span>
+
+        <p>
+            <button type="submit">Guardar</button>
+            <a th:href="@{/servers}">Cancelar</a>
+        </p>
+    </form>
+</main>
+
+<script>
+    const typeSel = document.getElementById('type');
+    const usernameInput = document.getElementById('username');
+    function applyType(setDefaultUrl) {
+        const opt = typeSel.options[typeSel.selectedIndex];
+        if (!opt || !opt.value) return;
+        document.getElementById('usernameLabel').textContent = opt.dataset.username;
+        const required = opt.dataset.usernameRequired === 'true';
+        usernameInput.required = required;
+        usernameInput.disabled = !required;
+        const url = document.getElementById('url');
+        if (setDefaultUrl && !url.value) url.value = opt.dataset.url;
+    }
+    typeSel.addEventListener('change', () => applyType(true));
+    applyType(false);
+</script>
+</body>
+</html>

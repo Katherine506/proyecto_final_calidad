@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Migrador</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header>
+    <div class="links">
+        <a th:href="@{/}">Migrar</a>
+        <a th:href="@{/servers}">Servidores</a>
+        <a th:href="@{/reports}">Reportes</a>
+    </div>
+    <div class="user" th:replace="~{fragments/userbar :: bar}"></div>
+</header>
+<main>
+    <h1>Migrar items</h1>
+
+    <div th:if="${message}" class="msg" th:classappend="${failed} ? 'error'" th:text="${message}"></div>
+
+    <p th:if="${#lists.isEmpty(configs)}" class="card">
+        No hay servidores configurados. <a th:href="@{/servers/new}">Agregar uno</a>.
+    </p>
+
+    <form th:action="@{/migrate}" method="post" id="migrateForm">
+        <div class="row">
+            <div class="card">
+                <h2>Origen</h2>
+                <label for="sourceType">Tipo de servidor</label>
+                <select id="sourceType">
+                    <option value="">-- seleccione --</option>
+                    <option th:each="t : ${types}" th:value="${t.type()}" th:text="${t.displayName()}"></option>
+                </select>
+                <label for="sourceId">Configuración</label>
+                <select id="sourceId" name="sourceId" disabled>
+                    <option value="">-- seleccione un tipo primero --</option>
+                </select>
+                <label for="sourceBoardIds">Boards a sincronizar (origen)</label>
+                <select id="sourceBoardIds" name="sourceBoardIds" multiple disabled size="6">
+                    <option value="">-- seleccione una configuración primero --</option>
+                </select>
+                <span class="hint">Mantenga presionado Ctrl (Cmd en Mac) para elegir varios.</span>
+            </div>
+
+            <div class="card">
+                <h2>Destino</h2>
+                <label for="targetType">Tipo de servidor</label>
+                <select id="targetType">
+                    <option value="">-- seleccione --</option>
+                    <option th:each="t : ${types}" th:value="${t.type()}" th:text="${t.displayName()}"></option>
+                </select>
+                <label for="targetId">Configuración</label>
+                <select id="targetId" name="targetId" disabled>
+                    <option value="">-- seleccione un tipo primero --</option>
+                </select>
+                <label for="targetBoardId">Board destino (donde se crean los items)</label>
+                <select id="targetBoardId" name="targetBoardId" disabled>
+                    <option value="">-- seleccione una configuración primero --</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" id="migrateBtn" disabled>Migrar</button>
+    </form>
+
+    <!-- Todas las configuraciones (vienen de la BD); el script las filtra por tipo. -->
+    <select id="allConfigs" hidden>
+        <option th:each="c : ${configs}" th:value="${c.id}" th:attr="data-type=${c.type}"
+                th:text="${c.name} + ' (' + ${c.url} + ')'"></option>
+    </select>
+</main>
+
+<script>
+    // Construida a mano (sin th:inline) para no chocar con el preprocesador de Thymeleaf,
+    // que interpreta cualquier texto "__así__" como una expresión a evaluar.
+    function boardsUrl(configId) {
+        return '/api/configs/' + encodeURIComponent(configId) + '/boards';
+    }
+    const all = Array.from(document.querySelectorAll('#allConfigs option'))
+        .map(o => ({id: o.value, type: o.dataset.type, text: o.textContent}));
+    const btn = document.getElementById('migrateBtn');
+
+    function bindType(typeId, configId) {
+        const typeSel = document.getElementById(typeId);
+        const cfgSel = document.getElementById(configId);
+        typeSel.addEventListener('change', () => {
+            cfgSel.innerHTML = '';
+            const matches = all.filter(c => c.type === typeSel.value);
+            const first = document.createElement('option');
+            first.value = '';
+            first.textContent = typeSel.value
+                ? (matches.length ? '-- seleccione --' : 'No hay configuraciones de este tipo')
+                : '-- seleccione un tipo primero --';
+            cfgSel.appendChild(first);
+            matches.forEach(c => {
+                const o = document.createElement('option');
+                o.value = c.id;
+                o.textContent = c.text;
+                cfgSel.appendChild(o);
+            });
+            cfgSel.disabled = matches.length === 0;
+            cfgSel.dispatchEvent(new Event('change'));
+        });
+    }
+
+    async function loadBoards(configId) {
+        const resp = await fetch(boardsUrl(configId));
+        if (!resp.ok) {
+            throw new Error('hubo un error');
+        }
+        return resp.json();
+    }
+
+    function bindSourceBoards() {
+        const cfgSel = document.getElementById('sourceId');
+        const boardSel = document.getElementById('sourceBoardIds');
+        cfgSel.addEventListener('change', async () => {
+            boardSel.innerHTML = '';
+            if (!cfgSel.value) {
+                const o = document.createElement('option');
+                o.value = '';
+                o.textContent = '-- seleccione una configuración primero --';
+                boardSel.appendChild(o);
+                boardSel.disabled = true;
+                refresh();
+                return;
+            }
+            const loading = document.createElement('option');
+            loading.textContent = 'Cargando...';
+            boardSel.appendChild(loading);
+            boardSel.disabled = true;
+            try {
+                const boards = await loadBoards(cfgSel.value);
+                boardSel.innerHTML = '';
+                if (boards.length === 0) {
+                    const o = document.createElement('option');
+                    o.value = '';
+                    o.textContent = 'No se encontraron boards';
+                    boardSel.appendChild(o);
+                }
+                boards.forEach(b => {
+                    const o = document.createElement('option');
+                    o.value = b.id;
+                    o.textContent = b.name;
+                    boardSel.appendChild(o);
+                });
+                boardSel.disabled = boards.length === 0;
+            } catch (e) {
+                boardSel.innerHTML = '<option value="">hubo un error</option>';
+            }
+            refresh();
+        });
+        boardSel.addEventListener('change', refresh);
+    }
+
+    function bindTargetBoards() {
+        const cfgSel = document.getElementById('targetId');
+        const boardSel = document.getElementById('targetBoardId');
+        cfgSel.addEventListener('change', async () => {
+            boardSel.innerHTML = '';
+            if (!cfgSel.value) {
+                const o = document.createElement('option');
+                o.value = '';
+                o.textContent = '-- seleccione una configuración primero --';
+                boardSel.appendChild(o);
+                boardSel.disabled = true;
+                refresh();
+                return;
+            }
+            const loading = document.createElement('option');
+            loading.textContent = 'Cargando...';
+            boardSel.appendChild(loading);
+            boardSel.disabled = true;
+            try {
+                const boards = await loadBoards(cfgSel.value);
+                boardSel.innerHTML = '';
+                const first = document.createElement('option');
+                first.value = '';
+                first.textContent = boards.length ? '-- seleccione --' : 'No se encontraron boards';
+                boardSel.appendChild(first);
+                boards.forEach(b => {
+                    const o = document.createElement('option');
+                    o.value = b.id;
+                    o.textContent = b.name;
+                    boardSel.appendChild(o);
+                });
+                boardSel.disabled = boards.length === 0;
+            } catch (e) {
+                boardSel.innerHTML = '<option value="">hubo un error</option>';
+            }
+            refresh();
+        });
+        boardSel.addEventListener('change', refresh);
+    }
+
+    function refresh() {
+        const sourceChosen = document.getElementById('sourceId').value;
+        const targetChosen = document.getElementById('targetId').value;
+        const anySourceBoard = Array.from(document.getElementById('sourceBoardIds').selectedOptions)
+            .some(o => o.value);
+        const targetBoard = document.getElementById('targetBoardId').value;
+        btn.disabled = !(sourceChosen && targetChosen && anySourceBoard && targetBoard);
+    }
+
+    bindType('sourceType', 'sourceId');
+    bindType('targetType', 'targetId');
+    bindSourceBoards();
+    bindTargetBoards();
+</script>
+</body>
+</html>

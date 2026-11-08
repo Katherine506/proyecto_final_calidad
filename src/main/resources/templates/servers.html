@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Servidores</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header>
+    <div class="links">
+        <a th:href="@{/}">Migrar</a>
+        <a th:href="@{/servers}">Servidores</a>
+        <a th:href="@{/reports}">Reportes</a>
+    </div>
+    <div class="user" th:replace="~{fragments/userbar :: bar}"></div>
+</header>
+<main>
+    <h1>Servidores</h1>
+    <p><a class="btn" th:href="@{/servers/new}">Nuevo servidor</a></p>
+
+    <div class="card">
+        <table>
+            <thead>
+            <tr><th>Nombre</th><th>Tipo</th><th>URL</th><th>Usuario</th><th></th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${configs}">
+                <td th:text="${c.name}"></td>
+                <td th:text="${c.type}"></td>
+                <td th:text="${c.url}"></td>
+                <td th:text="${c.username}"></td>
+                <td>
+                    <a th:href="@{/servers/{id}/edit(id=${c.id})}">Editar</a>
+                    <form class="inline" th:action="@{/servers/{id}/delete(id=${c.id})}" method="post"
+                          onsubmit="return confirm('¿Eliminar este servidor?');">
+                        <button type="submit" class="danger">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(configs)}"><td colspan="5">Sin servidores configurados.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>
