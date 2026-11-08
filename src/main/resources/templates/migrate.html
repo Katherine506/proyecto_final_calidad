@@ -107,7 +107,7 @@
     async function loadBoards(configId) {
         const resp = await fetch(boardsUrl(configId));
         if (!resp.ok) {
-            throw new Error('hubo un error');
+            throw new Error('No se pudieron cargar los tableros.');
         }
         return resp.json();
     }
@@ -147,7 +147,7 @@
                 });
                 boardSel.disabled = boards.length === 0;
             } catch (e) {
-                boardSel.innerHTML = '<option value="">hubo un error</option>';
+                boardSel.innerHTML = '<option value="">No se pudieron cargar los tableros.</option>';
             }
             refresh();
         });
@@ -187,7 +187,7 @@
                 });
                 boardSel.disabled = boards.length === 0;
             } catch (e) {
-                boardSel.innerHTML = '<option value="">hubo un error</option>';
+                boardSel.innerHTML = '<option value="">No se pudieron cargar los tableros.</option>';
             }
             refresh();
         });

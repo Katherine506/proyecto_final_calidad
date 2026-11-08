@@ -47,7 +47,7 @@ public class ReportController {
             try {
                 rows.add(toRow(m, configById));
             } catch (Exception e) {
-                log.error("hubo un error");
+                log.error("No se pudo armar una fila del reporte.");
             }
         }
         model.addAttribute("rows", rows);
@@ -76,7 +76,7 @@ public class ReportController {
         try {
             return registry.get(config.getType()).itemUrl(config, itemId);
         } catch (Exception e) {
-            log.error("hubo un error");
+            log.error("No se pudo armar el enlace del item.");
             return null;
         }
     }

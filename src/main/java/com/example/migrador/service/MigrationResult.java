@@ -13,11 +13,11 @@ public record MigrationResult(boolean failed, int created, int updated, int item
 
     public String message() {
         if (failed) {
-            return "hubo un error";
+            return "No se pudo completar la migracion.";
         }
-        String msg = "Migración terminada: " + created + " creados, " + updated + " actualizados";
+        String msg = "Migracion terminada: " + created + " creados, " + updated + " actualizados";
         if (itemErrors > 0) {
-            msg += ". Items con error: " + itemErrors + " (hubo un error)";
+            msg += ". Items con error: " + itemErrors + ". Esos items no se crearon ni se actualizaron.";
         }
         return msg;
     }

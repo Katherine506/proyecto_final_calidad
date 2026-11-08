@@ -38,7 +38,7 @@ public class AuthController {
                     return "redirect:/";
                 })
                 .orElseGet(() -> {
-                    model.addAttribute("error", "Usuario o contraseña incorrectos");
+                    model.addAttribute("error", "Usuario o contrasena incorrectos");
                     return "login";
                 });
     }

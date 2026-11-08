@@ -42,7 +42,7 @@ public class MigrationService {
             ConnectorSession targetSession = registry.get(target.getType()).connect(target);
             return itemCreator.sync(source, target, items, targetSession, targetBoardId);
         } catch (Exception e) {
-            log.error("hubo un error");
+            log.error("No se pudo completar la migracion.");
             return MigrationResult.failure();
         }
     }

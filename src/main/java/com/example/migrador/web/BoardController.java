@@ -35,8 +35,8 @@ public class BoardController {
             List<BoardOption> boards = registry.get(config.getType()).connect(config).listBoards();
             return ResponseEntity.ok(boards);
         } catch (Exception e) {
-            log.error("hubo un error");
-            return ResponseEntity.status(500).body(Map.of("error", "hubo un error"));
+            log.error("No se pudieron cargar los tableros.");
+            return ResponseEntity.status(500).body(Map.of("error", "No se pudieron cargar los tableros."));
         }
     }
 }

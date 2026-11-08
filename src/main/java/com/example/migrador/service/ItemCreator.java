@@ -42,7 +42,7 @@ public class ItemCreator {
                     created++;
                 }
             } catch (Exception e) {
-                log.error("hubo un error");
+                log.error("No se pudo crear o actualizar un item.");
                 errors++;
             }
         }
