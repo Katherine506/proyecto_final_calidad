@@ -1,4 +1,4 @@
-package com.example.migrador.integration;
+package com.example.migrador.exploratory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

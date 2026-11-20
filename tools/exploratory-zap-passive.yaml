@@ -1,0 +1,34 @@
+env:
+  contexts:
+    - name: migrador-local
+      urls:
+        - http://127.0.0.1:18080
+      includePaths:
+        - "http://127\\.0\\.0\\.1:18080.*"
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: passiveScan-config
+    parameters:
+      scanOnlyInScope: true
+
+  - type: spider
+    parameters:
+      context: migrador-local
+      url: http://127.0.0.1:18080
+      maxDuration: 1
+      maxDepth: 3
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 1
+
+  - type: report
+    parameters:
+      reportDir: ../target/exploratory-zap
+      reportFile: exploratory-passive
+      reportTitle: Exploratory passive scan
+      reportDescription: Passive-only scan of the local test instance; no active scanning.
